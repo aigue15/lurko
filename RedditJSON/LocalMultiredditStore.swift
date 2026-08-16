@@ -36,7 +36,7 @@ struct LocalMultireddit: Codable, Identifiable, Hashable {
                 return true
             }
             .prefix(200)
-            .map(\ .self)
+            .map(\.self)
     }
 }
 
@@ -113,7 +113,7 @@ final class LocalMultiredditStore {
             }
             .filter { isValid($0) && seenIDs.insert($0.id).inserted }
             .prefix(Constants.feedLimit)
-            .map(\ .self)
+            .map(\.self)
     }
 
     private static func isValid(_ feed: LocalMultireddit) -> Bool {
