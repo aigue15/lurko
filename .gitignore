@@ -1,0 +1,15 @@
+.DS_Store
+.build/
+Build/
+BuildDevice/
+DerivedData/
+DeviceBuild/
+DeviceBuildIconFixed/
+DeviceDerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+.env
+.env.*
