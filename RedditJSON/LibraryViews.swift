@@ -28,7 +28,7 @@ struct LibraryView: View {
                 libraryOverview
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(AppTheme.groupedBackground)
         .navigationTitle(section?.title ?? "Library")
         .searchable(text: $searchText, prompt: "Search your library")
         .onChange(of: section) {
@@ -522,8 +522,8 @@ struct SettingsView: View {
         Form {
             Section {
                 Picker("Post layout", selection: $library.feedLayout) {
-                    Text("Cards").tag(FeedLayout.comfortable)
                     Text("Compact").tag(FeedLayout.compact)
+                    Text("Comfortable").tag(FeedLayout.comfortable)
                     Text("Media").tag(FeedLayout.media)
                 }
                 .pickerStyle(.segmented)
@@ -536,7 +536,7 @@ struct SettingsView: View {
             } header: {
                 Text("Browsing")
             } footer: {
-                Text("Choose how posts look and which ranking opens by default.")
+                Text("Compact is the Apollo-style list. Comfortable and Media keep the same vote column with more room for text or images.")
             }
 
             Section("Content") {
@@ -709,9 +709,9 @@ struct SettingsView: View {
             Section("About") {
                 LabeledContent("Version", value: appVersion)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Lurko")
+                    Text("Lyra")
                         .font(.subheadline.weight(.semibold))
-                    Text("An independent, account-free viewer for public Reddit content. Not affiliated with Reddit, Inc.")
+                    Text("A focused, native Reddit reader in the spirit of Apollo. Independent and account-free. Not affiliated with Reddit, Inc.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -760,15 +760,14 @@ private struct LibrarySectionRow: View {
     let count: Int
 
     var body: some View {
-        HStack(spacing: 13) {
+        HStack(spacing: 12) {
             Image(systemName: section.systemImage)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(section.color.gradient, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .font(.body)
+                .foregroundStyle(section.color)
+                .frame(width: 26)
 
             Text(section.title)
-                .font(.body.weight(.semibold))
+                .font(.body)
                 .foregroundStyle(.primary)
 
             Spacer()

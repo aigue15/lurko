@@ -36,6 +36,6 @@ final class ShareViewController: UIViewController {
 
     private enum ShareError: LocalizedError {
         case noURL
-        var errorDescription: String? { "Lurko could not find a URL to save." }
+        var errorDescription: String? { "Lyra could not find a URL to save." }
     }
 }

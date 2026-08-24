@@ -10,11 +10,11 @@
 **Findings**
 
 - No actionable P0, P1, or P2 mismatch.
-- Fonts and typography: the Home Screen correctly uses Apple's system label typography. The custom uppercase presentation wordmark is intentionally not embedded in the app icon; the system label reads `Lurko` clearly.
+- Fonts and typography: the Home Screen correctly uses Apple's system label typography. The custom uppercase presentation wordmark is intentionally not embedded in the app icon; the system label reads `Lyra` clearly.
 - Spacing and layout rhythm: the mascot stays inside the iOS corner-safe area, remains centered, and reads clearly at Home Screen size.
 - Colors and visual tokens: midnight navy, coral orange, and warm cream remain faithful to the selected direction with strong contrast.
 - Image quality and asset fidelity: the gecko identity, curled conversation tail, three dots, and coral frame are preserved. The final source is sharp, square, opaque, and 1024 x 1024; legacy 120 px and 180 px icon files were derived from the same master.
-- Copy and content: the installed app label is exactly `Lurko`; user-facing app, widget, share-extension, shortcut, backup, and permission strings use the new name.
+- Copy and content: the installed app label is exactly `Lyra`; user-facing app, widget, share-extension, shortcut, backup, and permission strings use the new name.
 
 **Full-view Comparison Evidence**
 
@@ -30,7 +30,7 @@
 
 **Implementation Checklist**
 
-- [x] Preserve selected Lurko mascot identity.
+- [x] Preserve selected Lyra mascot identity.
 - [x] Produce 1024 x 1024 opaque App Store icon source.
 - [x] Produce matching legacy 120 px and 180 px runtime icons.
 - [x] Rename all user-visible product surfaces.

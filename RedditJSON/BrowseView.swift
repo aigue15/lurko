@@ -61,9 +61,9 @@ struct BrowseView: View {
                     }
                     .padding(.leading, AppTheme.contentPadding)
                     .padding(.trailing, 28)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 }
-                .background(Color(uiColor: .systemGroupedBackground))
+                .background(AppTheme.groupedBackground)
 
                 BrowseIndexRail(entries: indexEntries, selectedID: selectedIndexID) { entry in
                     guard selectedIndexID != entry.id else { return }
@@ -75,7 +75,7 @@ struct BrowseView: View {
                 }
             }
         }
-        .navigationTitle("Browse")
+        .navigationTitle("Communities")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -144,10 +144,10 @@ struct BrowseView: View {
             .id(BrowseAnchor.home)
 
             NavigationLink {
-                BrowseCombinedFeedView(
+                CombinedFeedView(
                     title: "Popular",
                     subtitle: "What Reddit is talking about",
-                    systemImage: "flame.fill",
+                    systemImage: "flame",
                     subreddits: ["popular"],
                     client: client
                 )
@@ -163,10 +163,10 @@ struct BrowseView: View {
             .id(BrowseAnchor.popular)
 
             NavigationLink {
-                BrowseCombinedFeedView(
+                CombinedFeedView(
                     title: "All",
                     subtitle: "The widest public Reddit feed",
-                    systemImage: "circle.grid.2x2.fill",
+                    systemImage: "globe",
                     subreddits: ["all"],
                     client: client
                 )
@@ -193,22 +193,21 @@ struct BrowseView: View {
                     presentedEditor = .create
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "square.stack.3d.up.badge.a")
-                            .font(.title3)
+                        Image(systemName: "plus")
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(AppTheme.tint)
-                            .frame(width: 42, height: 42)
-                            .background(AppTheme.tintSoft, in: Circle())
-                        VStack(alignment: .leading, spacing: 3) {
+                            .frame(width: 28, height: 28)
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Create a custom feed")
-                                .font(.body.weight(.semibold))
+                                .font(.body)
                                 .foregroundStyle(.primary)
-                            Text("Mix any public communities into one timeline")
+                            Text("Mix public communities into one timeline")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
                     }
-                    .frame(minHeight: 58)
+                    .frame(minHeight: 48)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -216,7 +215,7 @@ struct BrowseView: View {
             } else {
                 ForEach(sortedMultireddits) { feed in
                     NavigationLink {
-                        BrowseCombinedFeedView(
+                        CombinedFeedView(
                             title: feed.name,
                             subtitle: feed.subreddits.map { "r/\($0)" }.joined(separator: "  ·  "),
                             systemImage: "square.stack.3d.up.fill",
@@ -279,11 +278,11 @@ struct BrowseView: View {
         switch item {
         case .letter(let letter):
             Text(letter)
-                .font(.caption.weight(.heavy))
-                .foregroundStyle(AppTheme.tint)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 30)
-                .background(Color(uiColor: .systemGroupedBackground))
+                .frame(height: 26)
+                .background(AppTheme.groupedBackground)
                 .id(BrowseAnchor.letter(letter))
 
         case .community(let subreddit):
@@ -291,14 +290,14 @@ struct BrowseView: View {
                 CommunityFeedView(subreddit: subreddit, client: client)
             } label: {
                 HStack(spacing: 12) {
-                    RedditCommunityAvatar(name: subreddit, client: client, size: 42)
+                    RedditCommunityAvatar(name: subreddit, client: client, size: 32)
                     Text("r/\(subreddit)")
                         .font(.body.weight(.medium))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }
-                .frame(minHeight: 54)
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -338,11 +337,13 @@ private struct BrowseSectionHeader: View {
     let title: String
 
     var body: some View {
-        Text(title)
-            .font(.title3.bold())
+        Text(title.uppercased())
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .tracking(0.4)
             .lineLimit(1)
-        .padding(.top, 1)
-        .padding(.bottom, 3)
+            .padding(.top, 16)
+            .padding(.bottom, 6)
     }
 }
 
@@ -355,14 +356,13 @@ private struct BrowseDestinationRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 19, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 42, height: 42)
-                .background(color.gradient, in: Circle())
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 28, height: 28)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.body.weight(.semibold))
+                    .font(.body)
                     .foregroundStyle(.primary)
                 Text(subtitle)
                     .font(.caption)
@@ -371,7 +371,7 @@ private struct BrowseDestinationRow: View {
             }
             Spacer(minLength: 0)
         }
-        .frame(minHeight: 56)
+        .frame(minHeight: 48)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint("Opens this feed")
@@ -433,7 +433,7 @@ private struct BrowseIndexRail: View {
                                 .font(.system(size: 9, weight: .heavy))
                         case .letter(let value):
                             Text(value)
-                                .font(.system(size: 9, weight: .heavy, design: .rounded))
+                                .font(.system(size: 9, weight: .semibold))
                         }
                     }
                     .foregroundStyle(selectedID == entry.id ? AppTheme.tint : Color.primary.opacity(0.72))
@@ -677,12 +677,13 @@ private struct MultiredditEditorView: View {
     }
 }
 
-private struct BrowseCombinedFeedView: View {
+struct CombinedFeedView: View {
     let title: String
     let subtitle: String
     let systemImage: String
     let subreddits: [String]
     let client: RedditClient
+    var presentsAsRoot = false
 
     @Environment(LocalLibrary.self) private var library
     @State private var sort: FeedSort = .hot
@@ -708,9 +709,11 @@ private struct BrowseCombinedFeedView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
-                header
-                BrowseSortPills(sort: $sort)
+            LazyVStack(spacing: 0) {
+                if !presentsAsRoot {
+                    header
+                    Hairline()
+                }
 
                 if isLoading && posts.isEmpty {
                     LoadingFeedCards()
@@ -719,6 +722,7 @@ private struct BrowseCombinedFeedView: View {
                         Task { await load(reset: true) }
                     }
                     .frame(minHeight: 340)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else if posts.isEmpty {
                     ContentUnavailableView(
                         "No posts yet",
@@ -726,11 +730,14 @@ private struct BrowseCombinedFeedView: View {
                         description: Text("Try another sort or pull down to refresh.")
                     )
                     .frame(minHeight: 340)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else {
                     if let loadIssue {
                         CachedContentBanner(issue: loadIssue) {
                             Task { await load(reset: true) }
                         }
+                        .padding(.horizontal, AppTheme.contentPadding)
+                        .padding(.vertical, 8)
                     }
 
                     ForEach(posts) { post in
@@ -749,13 +756,16 @@ private struct BrowseCombinedFeedView: View {
                     if isLoadingMore { ProgressView().padding(.vertical, 20) }
                 }
             }
-            .padding(.horizontal, AppTheme.contentPadding)
-            .padding(.vertical, 10)
         }
         .scrollPosition(id: $scrollPosition)
-        .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle(title)
+        .background(AppTheme.feedBackground)
+        .navigationTitle(title, enabled: !presentsAsRoot)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                SortMenu(sort: $sort)
+            }
+        }
         .navigationDestination(item: $selectedPost) { post in
             PostDetailView(post: post, client: client)
         }
@@ -774,15 +784,14 @@ private struct BrowseCombinedFeedView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 13) {
+        HStack(spacing: 10) {
             Image(systemName: systemImage)
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.white)
-                .frame(width: 52, height: 52)
-                .background(AppTheme.communityColor(title).gradient, in: Circle())
-            VStack(alignment: .leading, spacing: 4) {
+                .font(.body.weight(.semibold))
+                .foregroundStyle(AppTheme.tint)
+                .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.title3.bold())
+                    .font(.headline)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -790,8 +799,8 @@ private struct BrowseCombinedFeedView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(15)
-        .appCard()
+        .padding(.horizontal, AppTheme.contentPadding)
+        .padding(.vertical, 12)
     }
 
     private func open(_ post: RedditPost) {
@@ -950,35 +959,4 @@ private struct BrowseFetchResult: Sendable {
 private struct BrowseFetchBatch: Sendable {
     let pages: [BrowseSourcePage]
     let issues: [ContentLoadIssue]
-}
-
-private struct BrowseSortPills: View {
-    @Binding var sort: FeedSort
-    @Environment(LocalLibrary.self) private var library
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(FeedSort.allCases) { option in
-                    Button {
-                        guard sort != option else { return }
-                        sort = option
-                        HapticFeedback.selection(enabled: library.hapticsEnabled)
-                    } label: {
-                        Text(option.label)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(sort == option ? Color.white : Color.secondary)
-                            .padding(.horizontal, 15)
-                            .frame(minHeight: 44)
-                            .background(
-                                sort == option ? AppTheme.tint : Color(uiColor: .secondarySystemGroupedBackground),
-                                in: Capsule()
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(sort == option ? .isSelected : [])
-                }
-            }
-        }
-    }
 }

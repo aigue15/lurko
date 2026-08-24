@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Lurko</string>
+	<string>Lyra</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -45,6 +45,7 @@
 			<string>com.proof.RedditJSON</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>lyra</string>
 				<string>lurko</string>
 				<string>threadline</string>
 			</array>
@@ -55,7 +56,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Lurko saves images to your photo library when you choose Save Image.</string>
+	<string>Lyra saves images to your photo library when you choose Save Image.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

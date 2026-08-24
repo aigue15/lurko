@@ -310,7 +310,7 @@ final class LocalLibrary {
         redditInterface = defaults.string(forKey: Key.redditInterface)
             .flatMap(RedditInterface.init(rawValue:)) ?? .browser
         feedLayout = defaults.string(forKey: Key.feedLayout)
-            .flatMap(FeedLayout.init(rawValue:)) ?? .comfortable
+            .flatMap(FeedLayout.init(rawValue:)) ?? .compact
         defaultSort = defaults.string(forKey: Key.defaultSort)
             .flatMap(FeedSort.init(rawValue:)) ?? .hot
 
@@ -818,7 +818,7 @@ final class LocalLibrary {
 
     func resetPreferences() {
         redditInterface = .browser
-        feedLayout = .comfortable
+        feedLayout = .compact
         defaultSort = .hot
         showNSFWContent = false
         blurNSFW = true

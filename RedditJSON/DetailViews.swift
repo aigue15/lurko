@@ -28,16 +28,15 @@ struct PostDetailView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(alignment: .leading, spacing: 0) {
                     postSurface
                         .id("post")
+                    Hairline()
                     commentsSurface(proxy: proxy)
                         .id("comments")
                 }
-                .padding(.horizontal, AppTheme.contentPadding)
-                .padding(.vertical, 12)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(AppTheme.feedBackground)
             .coordinateSpace(name: CommentScrollCoordinateSpace.name)
             .scrollPosition(id: $detailScrollPosition)
             .onPreferenceChange(CommentPositionPreferenceKey.self) { positions in
@@ -47,8 +46,8 @@ struct PostDetailView: View {
             .overlay(alignment: .bottomTrailing) {
                 if !activeCommentNodes.isEmpty {
                     commentNavigationButton(proxy: proxy)
-                        .padding(.trailing, 18)
-                        .padding(.bottom, 10)
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 12)
                 }
             }
         }
@@ -78,15 +77,15 @@ struct PostDetailView: View {
     }
 
     private var postSurface: some View {
-        VStack(alignment: .leading, spacing: 15) {
+        VStack(alignment: .leading, spacing: 12) {
             NavigationLink {
                 CommunityFeedView(subreddit: post.subreddit, client: client)
             } label: {
-                HStack(spacing: 9) {
-                    CommunityAvatar(name: post.subreddit, iconURL: community?.iconURL, size: 34)
+                HStack(spacing: 8) {
+                    CommunityAvatar(name: post.subreddit, iconURL: community?.iconURL, size: 28)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("r/\(post.subreddit)")
-                            .font(.subheadline.weight(.bold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text("u/\(post.author) · \(post.createdUTC.relativeRedditTime)")
                             .font(.caption)
@@ -107,7 +106,7 @@ struct PostDetailView: View {
             }
 
             Text(post.title)
-                .font(.system(.title2, design: .rounded, weight: .bold))
+                .font(.title3.weight(.semibold))
                 .textSelection(.enabled)
 
             PostMediaView(post: post)
@@ -135,16 +134,14 @@ struct PostDetailView: View {
                         Image(systemName: "arrow.up.right")
                     }
                     .foregroundStyle(.primary)
-                    .padding(13)
-                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .padding(12)
+                    .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
 
-            Divider()
-
-            HStack(spacing: 18) {
-                CountLabel(value: displayedScore, systemImage: "arrow.up", accessibilityText: displayedScore.upvoteLabel)
+            HStack(spacing: 16) {
+                VoteColumn(score: displayedScore)
                 CountLabel(value: displayedCommentCount, systemImage: "bubble.left", accessibilityText: displayedCommentCount.commentLabel)
                 Spacer()
             }
@@ -179,8 +176,8 @@ struct PostDetailView: View {
                 .accessibilityLabel("Open post in \(library.redditInterface.title)")
             }
         }
-        .padding(16)
-        .appCard()
+        .padding(.horizontal, AppTheme.contentPadding)
+        .padding(.vertical, 14)
     }
 
     private func commentsSurface(proxy: ScrollViewProxy) -> some View {
@@ -188,7 +185,7 @@ struct PostDetailView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(displayedCommentCount.commentLabel)
-                        .font(.title3.bold())
+                        .font(.headline)
                     if loadedCommentCount > 0, loadedCommentCount < displayedCommentCount {
                         Text("Showing \(loadedCommentCount.compactCount) available replies")
                             .font(.caption)
@@ -309,8 +306,8 @@ struct PostDetailView: View {
                 }
             }
         }
-        .padding(16)
-        .appCard()
+        .padding(.horizontal, AppTheme.contentPadding)
+        .padding(.vertical, 14)
     }
 
     private func commentNavigationButton(proxy: ScrollViewProxy) -> some View {
@@ -322,12 +319,11 @@ struct PostDetailView: View {
             }
         } label: {
             Image(systemName: focusedCommentParentID == nil ? "arrow.down.to.line" : "arrow.turn.up.left")
-                .font(.system(size: 19, weight: .bold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 54, height: 54)
-                .background(AppTheme.tint.gradient, in: Circle())
-                .overlay { Circle().strokeBorder(.white.opacity(0.28)) }
-                .shadow(color: .black.opacity(0.2), radius: 9, y: 5)
+                .frame(width: 44, height: 44)
+                .background(AppTheme.tint, in: Circle())
+                .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(.plain)
@@ -535,10 +531,10 @@ struct PostDetailView: View {
             else { Text(text) }
         }
         .font(.caption2.weight(.semibold))
-        .foregroundStyle(AppTheme.tint)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 5)
-        .background(AppTheme.tintSoft, in: Capsule())
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color(uiColor: .secondarySystemBackground), in: Capsule())
     }
 
     private func loadComments() async {
@@ -1343,15 +1339,13 @@ private struct CommentThreadView: View {
     }
 
     private var lineColor: Color {
-        let colors: [Color] = [AppTheme.tint, .blue, .green, .purple, .teal]
-        return colors[min(depth, colors.count - 1)]
+        Color.secondary.opacity(0.28)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 6) {
             Button { library.toggleCommentCollapsed(comment.id) } label: {
-                HStack(spacing: 7) {
-                    CommunityAvatar(name: comment.author, size: 23)
+                HStack(spacing: 5) {
                     Text("u/\(comment.author)")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(isPostAuthor ? AppTheme.tint : (comment.stickied ? Color.green : Color.primary))
@@ -1406,7 +1400,7 @@ private struct CommentThreadView: View {
                 CommentBodyView(comment: comment, sensitiveMedia: sensitiveMedia)
 
                 if !comment.replies.isEmpty, depth < 7 {
-                    VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 10) {
                         ForEach(comment.replies) { reply in
                             CommentThreadView(
                                 comment: reply,
@@ -1417,9 +1411,9 @@ private struct CommentThreadView: View {
                             )
                         }
                     }
-                    .padding(.leading, 12)
+                    .padding(.leading, 10)
                     .overlay(alignment: .leading) {
-                        Capsule().fill(lineColor.opacity(0.5)).frame(width: 2)
+                        Rectangle().fill(lineColor).frame(width: 1)
                     }
                 }
             } else {
