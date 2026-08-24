@@ -272,7 +272,7 @@ struct LocalBackupView: View {
             isPresented: $isExporting,
             document: backupDocument,
             contentType: .threadlineBackup,
-            defaultFilename: "Lurko-Backup"
+            defaultFilename: "Lyra-Backup"
         ) { result in
             if case .failure(let error) = result { message = error.localizedDescription }
             else { message = "Encrypted backup exported." }

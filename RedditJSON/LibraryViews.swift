@@ -709,7 +709,7 @@ struct SettingsView: View {
             Section("About") {
                 LabeledContent("Version", value: appVersion)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Lurko")
+                    Text("Lyra")
                         .font(.subheadline.weight(.semibold))
                     Text("A focused, native Reddit reader in the spirit of Apollo. Independent and account-free. Not affiliated with Reddit, Inc.")
                         .font(.caption)

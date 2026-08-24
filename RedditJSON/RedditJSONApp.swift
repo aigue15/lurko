@@ -95,7 +95,7 @@ struct AppRootView: View {
     }
 
     private func openDeepLink(_ url: URL) {
-        guard ["lurko", "threadline"].contains(url.scheme?.lowercased() ?? "") else { return }
+        guard ["lyra", "lurko", "threadline"].contains(url.scheme?.lowercased() ?? "") else { return }
         if url.host == "library" {
             selectedTab = .library
         } else if url.host == "browse" {

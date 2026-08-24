@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// A private, on-device collection of communities. It intentionally does not mirror or
-/// synchronize Reddit account multireddits because Lurko does not require a login.
+/// synchronize Reddit account multireddits because Lyra does not require a login.
 struct LocalMultireddit: Codable, Identifiable, Hashable {
     let id: UUID
     var name: String

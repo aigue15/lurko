@@ -617,7 +617,7 @@ actor ExternalMediaResolver {
         configuration.timeoutIntervalForResource = 20
         configuration.httpAdditionalHeaders = [
             "Accept": "application/json, image/*, video/*;q=0.9, */*;q=0.5",
-            "User-Agent": "Lurko/1.0 (anonymous Reddit media reader)"
+            "User-Agent": "Lyra/1.0 (anonymous Reddit media reader)"
         ]
         session = URLSession(configuration: configuration)
     }

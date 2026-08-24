@@ -12,7 +12,7 @@ struct ThreadlineQueueProvider: TimelineProvider {
     func placeholder(in context: Context) -> ThreadlineQueueEntry {
         ThreadlineQueueEntry(
             date: Date(),
-            items: [SharedWidgetItem(id: "preview", title: "Your reading queue", subreddit: "lurko", queued: true)]
+            items: [SharedWidgetItem(id: "preview", title: "Your reading queue", subreddit: "lyra", queued: true)]
         )
     }
 
@@ -35,11 +35,11 @@ struct ThreadlineQueueWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: ThreadlineQueueProvider(recent: false)) { entry in
-            ThreadlineListWidgetView(entry: entry, title: "Lurko", emptyText: "Your reading queue is empty")
+            ThreadlineListWidgetView(entry: entry, title: "Lyra", emptyText: "Your reading queue is empty")
                 .containerBackground(.fill.tertiary, for: .widget)
-                .widgetURL(URL(string: "lurko://library"))
+                .widgetURL(URL(string: "lyra://library"))
         }
-        .configurationDisplayName("Lurko Queue")
+        .configurationDisplayName("Lyra Queue")
         .description("Continue your private on-device reading queue.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
@@ -52,9 +52,9 @@ struct ThreadlineNewPostsWidget: Widget {
         StaticConfiguration(kind: kind, provider: ThreadlineQueueProvider(recent: true)) { entry in
             ThreadlineListWidgetView(entry: entry, title: "New posts", emptyText: "Open a feed to refresh")
                 .containerBackground(.fill.tertiary, for: .widget)
-                .widgetURL(URL(string: "lurko://browse"))
+                .widgetURL(URL(string: "lyra://browse"))
         }
-        .configurationDisplayName("Lurko New Posts")
+        .configurationDisplayName("Lyra New Posts")
         .description("See the newest posts from your most recently refreshed feed.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }

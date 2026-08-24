@@ -18,7 +18,7 @@ enum ThreadlineSpotlight {
                 post.linkFlairText ?? ""
             ] + (metadata[post.id]?.tags ?? [])
             attributes.creator = "u/\(post.author)"
-            attributes.contentURL = URL(string: "lurko://post/\(post.id)")
+            attributes.contentURL = URL(string: "lyra://post/\(post.id)")
             return CSSearchableItem(
                 uniqueIdentifier: "threadline.post.\(post.id)",
                 domainIdentifier: "threadline.local-library",
@@ -36,23 +36,23 @@ enum ThreadlineSpotlight {
 }
 
 struct OpenThreadlineIntent: AppIntent {
-    static let title: LocalizedStringResource = "Open Lurko"
+    static let title: LocalizedStringResource = "Open Lyra"
     static let description = IntentDescription("Open the private, account-free Reddit reader.")
     static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
-        .result(dialog: "Opening Lurko")
+        .result(dialog: "Opening Lyra")
     }
 }
 
 struct OpenThreadlineLibraryIntent: AppIntent {
-    static let title: LocalizedStringResource = "Open Lurko Library"
+    static let title: LocalizedStringResource = "Open Lyra Library"
     static let description = IntentDescription("Open your on-device reading library.")
     static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
         UserDefaults.standard.set("library", forKey: "system.pending-destination.v1")
-        return .result(dialog: "Opening your Lurko library")
+        return .result(dialog: "Opening your Lyra library")
     }
 }
 
@@ -61,14 +61,14 @@ struct ThreadlineAppShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: OpenThreadlineIntent(),
             phrases: ["Open \(.applicationName)", "Browse with \(.applicationName)"],
-            shortTitle: "Open Lurko",
-            systemImageName: "rectangle.stack"
+            shortTitle: "Open Lyra",
+            systemImageName: "text.justify"
         )
         AppShortcut(
             intent: OpenThreadlineLibraryIntent(),
             phrases: ["Open my \(.applicationName) library", "Continue reading in \(.applicationName)"],
-            shortTitle: "Lurko Library",
-            systemImageName: "books.vertical"
+            shortTitle: "Lyra Library",
+            systemImageName: "bookmark"
         )
     }
 }

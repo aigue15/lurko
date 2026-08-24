@@ -531,7 +531,7 @@ actor OfflineMediaCache {
         for url in candidates {
             if lowDataMode, ["mp4", "m3u8", "mov"].contains(url.pathExtension.lowercased()) { continue }
             var request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 20)
-            request.setValue("Lurko/1.0 offline-cache", forHTTPHeaderField: "User-Agent")
+            request.setValue("Lyra/1.0 offline-cache", forHTTPHeaderField: "User-Agent")
             guard URLCache.shared.cachedResponse(for: request) == nil else { continue }
             guard let (data, response) = try? await URLSession.shared.data(for: request),
                   data.count <= 25 * 1_024 * 1_024 else { continue }

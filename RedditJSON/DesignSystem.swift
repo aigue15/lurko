@@ -85,7 +85,7 @@ enum ContentLoadIssue: Equatable, Sendable {
         case .redditUnavailable:
             "Reddit’s public endpoints are not responding right now. Try again shortly."
         case .unreadableResponse:
-            "The public response did not contain content Lurko could read. Retrying may use another anonymous fallback."
+            "The public response did not contain content Lyra could read. Retrying may use another anonymous fallback."
         case .unknown(let message):
             message
         }
