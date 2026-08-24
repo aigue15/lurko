@@ -385,7 +385,7 @@ struct OfflineCommentThreadView: View {
                     }
                     .padding(.leading, 12)
                     .overlay(alignment: .leading) {
-                        Rectangle().fill(AppTheme.tint.opacity(0.35)).frame(width: 2)
+                        Rectangle().fill(Color.secondary.opacity(0.28)).frame(width: 1)
                     }
                 }
             }

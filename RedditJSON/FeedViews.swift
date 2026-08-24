@@ -1,7 +1,84 @@
 import SwiftUI
 
+enum HubFeed: String, CaseIterable, Identifiable {
+    case home
+    case popular
+    case all
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .home: "Home"
+        case .popular: "Popular"
+        case .all: "All"
+        }
+    }
+}
+
+/// Feed-first root in the spirit of Apollo: open the app and you are already reading.
+struct PostsHubView: View {
+    let client: RedditClient
+
+    @State private var feed: HubFeed = .home
+
+    var body: some View {
+        Group {
+            switch feed {
+            case .home:
+                HomeFeedView(client: client, hidesNavigationChrome: true)
+            case .popular:
+                CombinedFeedView(
+                    title: "Popular",
+                    subtitle: "Trending across Reddit",
+                    systemImage: "flame",
+                    subreddits: ["popular"],
+                    client: client,
+                    presentsAsRoot: true
+                )
+            case .all:
+                CombinedFeedView(
+                    title: "All",
+                    subtitle: "Posts from all public communities",
+                    systemImage: "globe",
+                    subreddits: ["all"],
+                    client: client,
+                    presentsAsRoot: true
+                )
+            }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 0) {
+                Picker("Feed", selection: $feed) {
+                    ForEach(HubFeed.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, AppTheme.contentPadding)
+                .padding(.vertical, 8)
+                Hairline()
+            }
+            .background(AppTheme.feedBackground)
+        }
+        .navigationTitle("Posts")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink {
+                    BrowseView(client: client)
+                } label: {
+                    Image(systemName: "list.bullet")
+                }
+                .accessibilityLabel("Communities")
+            }
+        }
+    }
+}
+
 struct HomeFeedView: View {
     let client: RedditClient
+    var hidesNavigationChrome = false
 
     @Environment(LocalLibrary.self) private var library
     @State private var sort: FeedSort = .hot
@@ -17,33 +94,38 @@ struct HomeFeedView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 0) {
                 if isLoading && posts.isEmpty {
                     LoadingFeedCards()
                 } else if library.subscriptions.isEmpty {
                     ContentUnavailableView(
                         "Build your home feed",
-                        systemImage: "rectangle.stack.badge.plus",
-                        description: Text("Find communities in Search and subscribe locally—no Reddit account needed.")
+                        systemImage: "plus.circle",
+                        description: Text("Search for a community and join it locally. No Reddit account needed.")
                     )
                     .frame(minHeight: 420)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else if let loadIssue, posts.isEmpty {
                     LoadIssueView(issue: loadIssue) {
                         Task { await load() }
                     }
                     .frame(minHeight: 420)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else if posts.isEmpty {
                     ContentUnavailableView(
                         "Nothing new yet",
-                        systemImage: "sparkles",
+                        systemImage: "text.justify",
                         description: Text("Pull down to refresh your communities.")
                     )
                     .frame(minHeight: 420)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else {
                     if let loadIssue {
                         CachedContentBanner(issue: loadIssue) {
                             Task { await load() }
                         }
+                        .padding(.horizontal, AppTheme.contentPadding)
+                        .padding(.vertical, 8)
                     }
 
                     ForEach(posts) { post in
@@ -58,13 +140,12 @@ struct HomeFeedView: View {
                     }
                 }
             }
-            .padding(.horizontal, AppTheme.contentPadding)
-            .padding(.vertical, 10)
         }
         .scrollPosition(id: $scrollPosition)
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(AppTheme.feedBackground)
         .refreshable { await load() }
-        .navigationTitle("Lurko")
+        .navigationTitle("Home", enabled: !hidesNavigationChrome)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 SortMenu(sort: $sort)
@@ -212,15 +293,14 @@ struct CommunityFeedView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 0) {
                 CommunityHero(
                     name: normalizedName,
                     community: community,
                     isSubscribed: library.isSubscribed(to: normalizedName),
                     onToggleSubscription: toggleSubscription
                 )
-
-                SortPills(sort: $sort)
+                Hairline()
 
                 if isLoading && posts.isEmpty {
                     LoadingFeedCards()
@@ -229,14 +309,18 @@ struct CommunityFeedView: View {
                         Task { await load(reset: true) }
                     }
                     .frame(minHeight: 360)
+                    .padding(.horizontal, AppTheme.contentPadding)
                 } else if posts.isEmpty {
                     ContentUnavailableView("No posts", systemImage: "tray", description: Text("Try a different sort or pull to refresh."))
                         .frame(minHeight: 360)
+                        .padding(.horizontal, AppTheme.contentPadding)
                 } else {
                     if let loadIssue {
                         CachedContentBanner(issue: loadIssue) {
                             Task { await load(reset: true) }
                         }
+                        .padding(.horizontal, AppTheme.contentPadding)
+                        .padding(.vertical, 8)
                     }
 
                     ForEach(posts) { post in
@@ -254,11 +338,14 @@ struct CommunityFeedView: View {
                     if isLoadingMore { ProgressView().padding(.vertical, 20) }
                 }
             }
-            .padding(.horizontal, AppTheme.contentPadding)
-            .padding(.vertical, 10)
         }
         .scrollPosition(id: $scrollPosition)
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(AppTheme.feedBackground)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                SortMenu(sort: $sort)
+            }
+        }
         .refreshable { await load(reset: true) }
         .navigationTitle("r/\(normalizedName)")
         .navigationBarTitleDisplayMode(.inline)
@@ -360,36 +447,31 @@ private struct CommunityHero: View {
     let onToggleSubscription: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 13) {
+        HStack(alignment: .center, spacing: 12) {
             CommunityAvatar(
                 name: name,
                 iconURL: URL(string: community?.iconImg?.htmlDecoded ?? ""),
-                size: 54
+                size: 40
             )
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("r/\(name)")
-                    .font(.title3.bold())
+                    .font(.headline)
                 if let members = community?.subscribers {
                     Text("\(members.compactCount) members")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-                if let description = community?.publicDescription, !description.isEmpty {
-                    Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
                 }
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 8)
 
             Button(isSubscribed ? "Joined" : "Join", action: onToggleSubscription)
                 .buttonStyle(CapsuleActionStyle(prominent: !isSubscribed))
         }
-        .padding(15)
-        .appCard()
+        .padding(.horizontal, AppTheme.contentPadding)
+        .padding(.vertical, 12)
+        .background(AppTheme.feedBackground)
     }
 }
 
@@ -407,16 +489,18 @@ struct PostCard: View {
         VStack(spacing: 0) {
             Button(action: onOpen) {
                 cardContent
-                    .padding(library.feedLayout == .compact ? 11 : 14)
+                    .padding(.horizontal, AppTheme.contentPadding)
+                    .padding(.top, library.feedLayout == .compact ? 10 : 12)
+                    .padding(.bottom, library.feedLayout == .compact ? 8 : 10)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            Divider().padding(.horizontal, library.feedLayout == .compact ? 11 : 14)
             postFooter
+            Hairline().padding(.leading, library.feedLayout == .compact ? 46 : AppTheme.contentPadding)
         }
-        .appCard()
-        .opacity(library.isRead(post) ? 0.72 : 1)
+        .background(AppTheme.feedBackground)
+        .opacity(library.isRead(post) ? 0.78 : 1)
         .simultaneousGesture(
             DragGesture(minimumDistance: 24).onEnded { value in
                 let horizontal = value.translation.width
@@ -494,66 +578,69 @@ struct PostCard: View {
     private var cardContent: some View {
         switch library.feedLayout {
         case .compact:
-            HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 8) {
+                VoteColumn(score: post.score)
+                VStack(alignment: .leading, spacing: 5) {
                     compactPostHeader
                     Text(post.title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
-                        .lineLimit(hasPreviewMedia ? 3 : 2)
+                        .lineLimit(hasPreviewMedia ? 4 : 3)
 
                     if !hasPreviewMedia, !post.selftext.isEmpty {
                         Text(post.selftext)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.leading)
-                            .lineLimit(1)
+                            .lineLimit(2)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 if hasPreviewMedia {
-                    PostPreviewMedia(post: post, height: 78, compact: true)
-                        .frame(width: 92)
+                    PostPreviewMedia(post: post, height: AppTheme.thumbnailSize, compact: true)
+                        .frame(width: AppTheme.thumbnailSize)
                 }
             }
         case .comfortable:
-            VStack(alignment: .leading, spacing: 10) {
-                postHeader
-                titleAndExcerpt
-                if hasPreviewMedia {
-                    PostPreviewMedia(post: post, height: 220)
-                } else if post.selftext.isEmpty {
-                    linkPreview
+            HStack(alignment: .top, spacing: 10) {
+                VoteColumn(score: post.score)
+                VStack(alignment: .leading, spacing: 8) {
+                    postHeader
+                    titleAndExcerpt
+                    if hasPreviewMedia {
+                        PostPreviewMedia(post: post, height: 180)
+                    } else if post.selftext.isEmpty {
+                        linkPreview
+                    }
                 }
             }
         case .media:
-            VStack(alignment: .leading, spacing: 10) {
-                postHeader
-                if hasPreviewMedia {
-                    PostPreviewMedia(post: post, height: 260, fitsMedia: true)
-                    Text(post.title)
-                        .font(.system(.headline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(3)
-                } else {
-                    Text(post.title)
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(4)
-
-                    if !post.selftext.isEmpty {
-                        Text(post.selftext)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
+                    VoteColumn(score: post.score)
+                    VStack(alignment: .leading, spacing: 6) {
+                        postHeader
+                        Text(post.title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
                             .multilineTextAlignment(.leading)
                             .lineLimit(4)
-                    } else {
-                        linkPreview
                     }
+                }
+                if hasPreviewMedia {
+                    PostPreviewMedia(post: post, height: 240, fitsMedia: true)
+                } else if !post.selftext.isEmpty {
+                    Text(post.selftext)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(4)
+                        .padding(.leading, AppTheme.voteColumnWidth + 10)
+                } else {
+                    linkPreview
+                        .padding(.leading, AppTheme.voteColumnWidth + 10)
                 }
             }
         }
@@ -561,83 +648,43 @@ struct PostCard: View {
 
     @ViewBuilder
     private var postFooter: some View {
-        if library.feedLayout == .compact {
-            HStack(spacing: 12) {
-                CountLabel(value: post.score, systemImage: "arrow.up", accessibilityText: post.score.upvoteLabel)
-                CountLabel(value: post.numComments, systemImage: "bubble.left", accessibilityText: post.numComments.commentLabel)
+        HStack(spacing: 16) {
+            CountLabel(value: post.numComments, systemImage: "bubble.left", accessibilityText: post.numComments.commentLabel)
+            if !post.domain.isEmpty, post.domain != "self.\(post.subreddit)" {
+                Text(post.domain)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
 
-                Spacer(minLength: 2)
+            Spacer(minLength: 4)
 
-                Button {
-                    library.toggleSaved(post)
-                    HapticFeedback.success(enabled: library.hapticsEnabled)
-                } label: {
-                    Image(systemName: library.isSaved(post) ? "bookmark.fill" : "bookmark")
-                        .frame(width: 34, height: 34)
-                        .background(library.isSaved(post) ? AppTheme.tintSoft : Color.clear, in: Circle())
+            Button {
+                library.toggleSaved(post)
+                HapticFeedback.success(enabled: library.hapticsEnabled)
+            } label: {
+                Image(systemName: library.isSaved(post) ? "bookmark.fill" : "bookmark")
+                    .font(.subheadline)
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(library.isSaved(post) ? AppTheme.tint : Color.secondary)
+            .accessibilityLabel(library.isSaved(post) ? "Remove local save" : "Save post locally")
+
+            if let url = post.redditURL {
+                ShareLink(item: url) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.subheadline)
+                        .frame(width: 36, height: 36)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(library.isSaved(post) ? AppTheme.tint : Color.secondary)
-                .accessibilityLabel(library.isSaved(post) ? "Remove local save" : "Save post locally")
-
-                if let url = post.redditURL {
-                    ShareLink(item: url) {
-                        Image(systemName: "square.and.arrow.up")
-                            .frame(width: 34, height: 34)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Share post")
-
-                    Button(action: openExternally) {
-                        Image(systemName: "arrow.up.forward.app")
-                            .frame(width: 34, height: 34)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Open in \(library.redditInterface.title)")
-                }
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("Share post")
             }
-            .padding(.horizontal, 11)
-            .padding(.vertical, 2)
-        } else {
-            HStack(spacing: 8) {
-                CountLabel(value: post.score, systemImage: "arrow.up", accessibilityText: post.score.upvoteLabel)
-                CountLabel(value: post.numComments, systemImage: "bubble.left", accessibilityText: post.numComments.commentLabel)
-
-                Spacer(minLength: 4)
-
-                Button {
-                    library.toggleSaved(post)
-                    HapticFeedback.success(enabled: library.hapticsEnabled)
-                } label: {
-                    Label(
-                        library.isSaved(post) ? "Saved" : "Save",
-                        systemImage: library.isSaved(post) ? "bookmark.fill" : "bookmark"
-                    )
-                }
-                .buttonStyle(PostUtilityActionStyle(isActive: library.isSaved(post)))
-                .accessibilityLabel(library.isSaved(post) ? "Remove local save" : "Save post locally")
-
-                if let url = post.redditURL {
-                    ShareLink(item: url) {
-                        Image(systemName: "square.and.arrow.up")
-                            .frame(width: 18)
-                    }
-                    .buttonStyle(PostUtilityActionStyle())
-                    .accessibilityLabel("Share post")
-
-                    Button(action: openExternally) {
-                        Image(systemName: "arrow.up.forward.app")
-                            .frame(width: 18)
-                    }
-                    .buttonStyle(PostUtilityActionStyle())
-                    .accessibilityLabel("Open in \(library.redditInterface.title)")
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
         }
+        .padding(.leading, library.feedLayout == .compact ? 46 : AppTheme.contentPadding)
+        .padding(.trailing, 6)
+        .padding(.bottom, 4)
     }
 
     private var hasPreviewMedia: Bool {
@@ -648,6 +695,29 @@ struct PostCard: View {
     }
 
     private var compactPostHeader: some View {
+        HStack(spacing: 4) {
+            Text("r/\(post.subreddit)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Text("·")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text(post.createdUTC.relativeRedditTime)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+            if post.over18 {
+                Text("NSFW").font(.caption2.weight(.semibold)).foregroundStyle(.red)
+            } else if post.spoiler {
+                Text("SPOILER").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+            } else if isNew {
+                Text("NEW").font(.caption2.weight(.semibold)).foregroundStyle(AppTheme.tint)
+            }
+        }
+    }
+
+    private var postHeader: some View {
         HStack(spacing: 6) {
             CommunityAvatar(
                 name: post.subreddit,
@@ -655,61 +725,37 @@ struct PostCard: View {
                 size: 22
             )
             Text("r/\(post.subreddit)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.primary)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text("u/\(post.author)")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
                 .lineLimit(1)
             Text("· \(post.createdUTC.relativeRedditTime)")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
                 .lineLimit(1)
-            Spacer(minLength: 2)
-            if post.over18 {
-                Text("NSFW").font(.caption2.bold()).foregroundStyle(.red)
-            } else if post.spoiler {
-                Text("SPOILER").font(.caption2.bold()).foregroundStyle(.secondary)
-            } else if isNew {
-                Text("NEW").font(.caption2.bold()).foregroundStyle(AppTheme.tint)
-            }
-        }
-    }
-
-    private var postHeader: some View {
-        HStack(spacing: 8) {
-            CommunityAvatar(
-                name: post.subreddit,
-                iconURL: URL(string: community?.iconImg?.htmlDecoded ?? ""),
-                size: 28
-            )
-            VStack(alignment: .leading, spacing: 1) {
-                Text("r/\(post.subreddit)")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                Text("u/\(post.author) · \(post.createdUTC.relativeRedditTime)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer()
+            Spacer(minLength: 0)
             if post.over18 {
                 Text("NSFW")
-                    .font(.caption2.bold())
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.red)
             } else if post.spoiler {
                 Text("SPOILER")
-                    .font(.caption2.bold())
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
             } else if isNew {
                 Text("NEW")
-                    .font(.caption2.bold())
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(AppTheme.tint)
             }
         }
     }
 
     private var titleAndExcerpt: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(post.title)
-                .font(.system(.headline, design: .rounded, weight: .semibold))
+                .font(.headline)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
             if !post.selftext.isEmpty, library.feedLayout != .media {
@@ -717,7 +763,7 @@ struct PostCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.leading)
-                    .lineLimit(library.feedLayout == .compact ? 2 : 3)
+                    .lineLimit(3)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -730,10 +776,11 @@ struct PostCard: View {
             Spacer()
             Image(systemName: "arrow.up.right")
         }
-        .font(.caption.weight(.medium))
+        .font(.caption)
         .foregroundStyle(.secondary)
-        .padding(11)
-        .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func openExternally() {
@@ -815,7 +862,7 @@ private struct PostPreviewMedia: View {
                 ? Color(uiColor: .secondarySystemGroupedBackground)
                 : Color(uiColor: .quaternarySystemFill)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: compact ? 6 : 8, style: .continuous))
     }
 
     private var previewImageURL: URL? {
@@ -824,45 +871,15 @@ private struct PostPreviewMedia: View {
 
     private func mediaPlaceholder(icon: String) -> some View {
         ZStack {
-            LinearGradient(
-                colors: [AppTheme.communityColor(post.subreddit).opacity(0.48), AppTheme.tint.opacity(0.2)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            Color(uiColor: .secondarySystemFill)
             Image(systemName: icon)
-                .font(.largeTitle)
-                .foregroundStyle(.white.opacity(0.9))
+                .font(compact ? .title3 : .title)
+                .foregroundStyle(.secondary)
         }
     }
 }
 
-private struct SortPills: View {
-    @Binding var sort: FeedSort
-    @Environment(LocalLibrary.self) private var library
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(FeedSort.allCases) { option in
-                    Button {
-                        sort = option
-                        HapticFeedback.selection(enabled: library.hapticsEnabled)
-                    } label: {
-                        Text(option.label)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(sort == option ? Color.white : Color.secondary)
-                            .padding(.horizontal, 13)
-                            .padding(.vertical, 8)
-                            .background(sort == option ? AppTheme.tint : Color(uiColor: .secondarySystemGroupedBackground), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-}
-
-private struct SortMenu: View {
+struct SortMenu: View {
     @Binding var sort: FeedSort
 
     var body: some View {
@@ -885,19 +902,20 @@ struct PostRow: View {
     @Environment(LocalLibrary.self) private var library
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: 6) {
-                    CommunityAvatar(name: post.subreddit, size: 22)
+        HStack(alignment: .top, spacing: 8) {
+            VoteColumn(score: post.score)
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 4) {
                     Text("r/\(post.subreddit)")
-                        .font(.caption.weight(.bold))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                     Text("· \(post.createdUTC.relativeRedditTime)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                        .foregroundStyle(.tertiary)
+                    Spacer(minLength: 0)
                     if library.isSaved(post) {
                         Image(systemName: "bookmark.fill")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(AppTheme.tint)
                     }
                 }
@@ -908,10 +926,7 @@ struct PostRow: View {
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
 
-                HStack(spacing: 14) {
-                    CountLabel(value: post.score, systemImage: "arrow.up", accessibilityText: post.score.upvoteLabel)
-                    CountLabel(value: post.numComments, systemImage: "bubble.left", accessibilityText: post.numComments.commentLabel)
-                }
+                CountLabel(value: post.numComments, systemImage: "bubble.left", accessibilityText: post.numComments.commentLabel)
             }
 
             if let imageURL = post.imageURL {
@@ -922,11 +937,11 @@ struct PostRow: View {
                         Rectangle().fill(.quaternary)
                     }
                 }
-                .frame(width: 82, height: 82)
-                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .frame(width: AppTheme.thumbnailSize, height: AppTheme.thumbnailSize)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .overlay {
                     if library.shouldBlurMedia(for: post) {
-                        RoundedRectangle(cornerRadius: 11).fill(.ultraThinMaterial)
+                        RoundedRectangle(cornerRadius: 6).fill(.ultraThinMaterial)
                         Image(systemName: "eye.slash.fill").foregroundStyle(.secondary)
                     }
                 }
@@ -938,17 +953,18 @@ struct PostRow: View {
 
 struct LoadingFeedCards: View {
     var body: some View {
-        ForEach(0..<4, id: \.self) { _ in
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Circle().fill(.quaternary).frame(width: 28, height: 28)
-                    RoundedRectangle(cornerRadius: 4).fill(.quaternary).frame(width: 120, height: 13)
+        ForEach(0..<6, id: \.self) { _ in
+            HStack(alignment: .top, spacing: 10) {
+                RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 22, height: 44)
+                VStack(alignment: .leading, spacing: 8) {
+                    RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 120, height: 10)
+                    RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(height: 14)
+                    RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 180, height: 14)
                 }
-                RoundedRectangle(cornerRadius: 6).fill(.quaternary).frame(height: 20)
-                RoundedRectangle(cornerRadius: 13).fill(.quaternary).frame(height: 190)
+                RoundedRectangle(cornerRadius: 6).fill(.quaternary).frame(width: AppTheme.thumbnailSize, height: AppTheme.thumbnailSize)
             }
-            .padding(14)
-            .appCard()
+            .padding(.horizontal, AppTheme.contentPadding)
+            .padding(.vertical, 12)
             .redacted(reason: .placeholder)
         }
     }

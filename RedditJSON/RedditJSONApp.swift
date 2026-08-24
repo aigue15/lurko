@@ -14,7 +14,7 @@ struct RedditJSONApp: App {
 }
 
 private enum AppTab: Hashable {
-    case browse
+    case posts
     case search
     case library
     case settings
@@ -25,17 +25,17 @@ struct AppRootView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var library = LocalLibrary()
-    @State private var selectedTab: AppTab = .browse
+    @State private var selectedTab: AppTab = .posts
     @State private var searchRefreshID = UUID()
     @State private var deepLinkedPost: RedditPost?
 
     var body: some View {
         TabView(selection: tabSelection) {
             NavigationStack {
-                BrowseView(client: client)
+                PostsHubView(client: client)
             }
-            .tabItem { Label("Browse", systemImage: "rectangle.grid.1x2") }
-            .tag(AppTab.browse)
+            .tabItem { Label("Posts", systemImage: "text.justify") }
+            .tag(AppTab.posts)
 
             NavigationStack {
                 ExploreView(client: client, refreshID: searchRefreshID)
@@ -46,7 +46,7 @@ struct AppRootView: View {
             NavigationStack {
                 LibraryView(client: client)
             }
-            .tabItem { Label("Library", systemImage: "books.vertical") }
+            .tabItem { Label("Library", systemImage: "bookmark") }
             .tag(AppTab.library)
 
             NavigationStack {
@@ -99,7 +99,7 @@ struct AppRootView: View {
         if url.host == "library" {
             selectedTab = .library
         } else if url.host == "browse" {
-            selectedTab = .browse
+            selectedTab = .posts
         } else if url.host == "post", let postID = url.pathComponents.dropFirst().first {
             deepLinkedPost = library.allLocalPosts.first { $0.id == postID }
         }

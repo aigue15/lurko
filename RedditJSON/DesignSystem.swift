@@ -144,26 +144,36 @@ struct CachedContentBanner: View {
                 .font(.caption.weight(.semibold))
                 .buttonStyle(.bordered)
         }
-        .padding(12)
-        .background(AppTheme.tintSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(AppTheme.tintSoft, in: RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
 
 enum AppTheme {
-    static let tint = Color(red: 1.00, green: 0.36, blue: 0.20)
-    static let tintSoft = tint.opacity(0.12)
-    static let cardRadius: CGFloat = 18
-    static let contentPadding: CGFloat = 16
+    /// Apollo-descended accent: Reddit orange, used sparingly.
+    static let tint = Color(red: 1.00, green: 0.271, blue: 0.0)
+    static let tintSoft = tint.opacity(0.10)
+    static let upvote = Color(red: 1.00, green: 0.545, blue: 0.004)
+    static let downvote = Color(red: 0.447, green: 0.573, blue: 0.898)
+    static let cardRadius: CGFloat = 10
+    static let contentPadding: CGFloat = 12
+    static let voteColumnWidth: CGFloat = 34
+    static let thumbnailSize: CGFloat = 68
+
+    static var feedBackground: Color { Color(uiColor: .systemBackground) }
+    static var groupedBackground: Color { Color(uiColor: .systemGroupedBackground) }
+    static var hairline: Color { Color(uiColor: .separator).opacity(0.55) }
 
     static func communityColor(_ name: String) -> Color {
         let palette: [Color] = [
-            Color(red: 0.96, green: 0.34, blue: 0.23),
-            Color(red: 0.25, green: 0.49, blue: 0.96),
-            Color(red: 0.35, green: 0.68, blue: 0.48),
-            Color(red: 0.61, green: 0.39, blue: 0.91),
-            Color(red: 0.96, green: 0.60, blue: 0.18),
-            Color(red: 0.17, green: 0.65, blue: 0.70)
+            Color(red: 0.93, green: 0.33, blue: 0.18),
+            Color(red: 0.22, green: 0.45, blue: 0.86),
+            Color(red: 0.28, green: 0.62, blue: 0.44),
+            Color(red: 0.52, green: 0.36, blue: 0.82),
+            Color(red: 0.90, green: 0.55, blue: 0.16),
+            Color(red: 0.16, green: 0.58, blue: 0.64)
         ]
         let value = name.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }
         return palette[abs(value) % palette.count]
@@ -198,7 +208,7 @@ struct CommunityAvatar: View {
                 endPoint: .bottomTrailing
             )
             Text(String(name.prefix(1)).uppercased())
-                .font(.system(size: size * 0.43, weight: .bold, design: .rounded))
+                .font(.system(size: size * 0.42, weight: .semibold))
                 .foregroundStyle(.white)
         }
     }
@@ -222,36 +232,63 @@ struct CapsuleActionStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
+            .font(.caption.weight(.semibold))
+            .textCase(.uppercase)
+            .tracking(0.4)
             .foregroundStyle(prominent ? Color.white : AppTheme.tint)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 8)
-            .background(prominent ? AppTheme.tint : AppTheme.tintSoft, in: Capsule())
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(prominent ? AppTheme.tint : Color.clear, in: Capsule())
+            .overlay {
+                Capsule().strokeBorder(AppTheme.tint, lineWidth: prominent ? 0 : 1)
+            }
             .opacity(configuration.isPressed ? 0.65 : 1)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
-/// A finger-friendly utility action used for high-frequency post controls.
-/// The 44-point minimum remains comfortable without making feed cards feel heavy.
+/// Quiet text/icon controls in the spirit of Apollo's post action bar.
 struct PostUtilityActionStyle: ButtonStyle {
     var isActive = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.caption.weight(.semibold))
+            .font(.subheadline.weight(.medium))
             .foregroundStyle(isActive ? AppTheme.tint : Color.secondary)
-            .padding(.horizontal, 10)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
-            .background(
-                isActive ? AppTheme.tintSoft : Color.primary.opacity(0.055),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
-            .opacity(configuration.isPressed ? 0.62 : 1)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .opacity(configuration.isPressed ? 0.5 : 1)
+    }
+}
+
+struct VoteColumn: View {
+    let score: Int
+
+    var body: some View {
+        VStack(spacing: 3) {
+            Image(systemName: "arrow.up")
+                .font(.system(size: 11, weight: .bold))
+            Text(score.compactCount)
+                .font(.caption2.weight(.semibold))
+                .monospacedDigit()
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+            Image(systemName: "arrow.down")
+                .font(.system(size: 11, weight: .bold))
+        }
+        .foregroundStyle(.secondary)
+        .frame(width: AppTheme.voteColumnWidth)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(score.upvoteLabel)
+    }
+}
+
+struct Hairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(AppTheme.hairline)
+            .frame(height: 1 / max(UIScreen.main.scale, 2))
+            .accessibilityHidden(true)
     }
 }
 
@@ -259,16 +296,25 @@ struct CardBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background, in: RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous))
+            .background(AppTheme.feedBackground, in: RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: AppTheme.cardRadius, style: .continuous)
-                    .strokeBorder(.primary.opacity(0.06))
+                    .strokeBorder(AppTheme.hairline)
             }
     }
 }
 
 extension View {
     func appCard() -> some View { modifier(CardBackground()) }
+
+    @ViewBuilder
+    func navigationTitle(_ title: String, enabled: Bool) -> some View {
+        if enabled {
+            self.navigationTitle(title)
+        } else {
+            self
+        }
+    }
 }
 
 @MainActor

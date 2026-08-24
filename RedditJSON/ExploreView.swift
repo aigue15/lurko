@@ -5,7 +5,6 @@ struct ExploreView: View {
     let refreshID: UUID
 
     @Environment(LocalLibrary.self) private var library
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var query = ""
     @State private var scope: SearchScope = .communities
@@ -29,8 +28,8 @@ struct ExploreView: View {
                 searchResults
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("Discover")
+        .background(AppTheme.groupedBackground)
+        .navigationTitle("Search")
         .searchable(
             text: $query,
             placement: .navigationBarDrawer(displayMode: .always),
@@ -58,46 +57,35 @@ struct ExploreView: View {
     }
 
     private var discoveryContent: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 26) {
-                discoverySection(title: "Popular communities", subtitle: "A good place to start") {
-                    LazyVGrid(
-                        columns: discoveryColumns,
-                        spacing: 12
-                    ) {
-                        ForEach(suggestions) { suggestion in
-                            DiscoveryCommunityCard(
-                                community: suggestion,
-                                client: client,
-                                isSubscribed: library.isSubscribed(to: suggestion.name),
-                                open: { openCommunity(suggestion.name) },
-                                toggleSubscription: { toggleSubscription(suggestion.name) }
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 16)
+        List {
+            Section {
+                ForEach(suggestions) { suggestion in
+                    DiscoveryCommunityRow(
+                        community: suggestion,
+                        client: client,
+                        isSubscribed: library.isSubscribed(to: suggestion.name),
+                        open: { openCommunity(suggestion.name) },
+                        toggleSubscription: { toggleSubscription(suggestion.name) }
+                    )
                 }
-
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "person.crop.circle.badge.xmark")
-                        .font(.title2)
-                        .foregroundStyle(AppTheme.tint)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Browse without an account")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Search and read public communities while subscriptions and saves remain private on your device.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(16)
-                .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .padding(.horizontal, 16)
+            } header: {
+                Text("Popular communities")
+            } footer: {
+                Text("Join locally. Subscriptions stay on this device.")
             }
-            .padding(.top, 12)
-            .padding(.bottom, 28)
+
+            Section {
+                Label {
+                    Text("Search and read public communities without a Reddit account.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } icon: {
+                    Image(systemName: "person.crop.circle.badge.xmark")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
+        .listStyle(.insetGrouped)
         .scrollDismissesKeyboard(.interactively)
     }
 
@@ -170,38 +158,9 @@ struct ExploreView: View {
         }
     }
 
-    private func discoverySection<Content: View>(
-        title: String,
-        subtitle: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.title3.bold())
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 16)
-
-            content()
-        }
-    }
-
     private func openCommunity(_ name: String) {
         HapticFeedback.impact(enabled: library.hapticsEnabled)
         destination = .community(name.redditNormalized)
-    }
-
-    private var discoveryColumns: [GridItem] {
-        if dynamicTypeSize.isAccessibilitySize {
-            return [GridItem(.flexible())]
-        }
-        return [
-            GridItem(.flexible(), spacing: 12),
-            GridItem(.flexible(), spacing: 12)
-        ]
     }
 
     private func toggleSubscription(_ name: String) {
@@ -320,7 +279,7 @@ private struct DiscoveryCommunity: Identifiable {
     var id: String { name }
 }
 
-private struct DiscoveryCommunityCard: View {
+private struct DiscoveryCommunityRow: View {
     let community: DiscoveryCommunity
     let client: RedditClient
     let isSubscribed: Bool
@@ -328,46 +287,28 @@ private struct DiscoveryCommunityCard: View {
     let toggleSubscription: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        HStack(spacing: 12) {
             Button(action: open) {
-                VStack(alignment: .leading, spacing: 10) {
-                    RedditCommunityAvatar(name: community.name, client: client, size: 44)
-
-                    VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 12) {
+                    RedditCommunityAvatar(name: community.name, client: client, size: 32)
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("r/\(community.name)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.body)
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                         Text(community.subtitle)
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(2)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            Button(action: toggleSubscription) {
-                Label(isSubscribed ? "Joined" : "Join", systemImage: isSubscribed ? "checkmark" : "plus")
-                    .font(.caption.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
-                    .foregroundStyle(isSubscribed ? Color.secondary : AppTheme.tint)
-                    .background(
-                        isSubscribed ? Color.secondary.opacity(0.09) : AppTheme.tintSoft,
-                        in: Capsule()
-                    )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isSubscribed ? "Leave r/\(community.name)" : "Join r/\(community.name)")
-        }
-        .padding(14)
-        .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.quaternary, lineWidth: 0.5)
+            Button(isSubscribed ? "Joined" : "Join", action: toggleSubscription)
+                .buttonStyle(CapsuleActionStyle(prominent: !isSubscribed))
+                .accessibilityLabel(isSubscribed ? "Leave r/\(community.name)" : "Join r/\(community.name)")
         }
     }
 }
@@ -407,7 +348,7 @@ struct CommunityRow: View {
             CommunityAvatar(
                 name: community.displayName,
                 iconURL: community.iconImg.flatMap { URL(string: $0.htmlDecoded) },
-                size: 44
+                size: 32
             )
 
             VStack(alignment: .leading, spacing: 3) {

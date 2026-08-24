@@ -67,9 +67,9 @@ private struct ThreadlineListWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Label(title, systemImage: "books.vertical.fill")
-                .font(.caption.bold())
-                .foregroundStyle(.orange)
+            Label(title, systemImage: "text.justify")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color(red: 1.00, green: 0.271, blue: 0.0))
 
             if entry.items.isEmpty {
                 Text(emptyText)

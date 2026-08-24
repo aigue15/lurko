@@ -1,6 +1,6 @@
 # Lurko
 
-Native iOS Reddit client. Local library, feed browsing, share extension, and home-screen widgets.
+Native iOS Reddit client in the spirit of Apollo: feed-first, compact, and account-free. Local library, share extension, and home-screen widgets.
 
 The Xcode target is still named `RedditJSON` (`com.proof.RedditJSON`). The user-facing name is Lurko.
 
